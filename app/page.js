@@ -1,115 +1,114 @@
-// File: app/page.jsx
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 
-export default function Home() {
-  const [task, setTask] = useState("");
-  const [tasks, setTasks] = useState([]);
+export default function Home(){
 
-  // Load tasks from localStorage or fetch from API on component mount
-  useEffect(() => {
-    const storedTasks = localStorage.getItem("tasks");
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks));
-    } else {
-      fetch("/api/tasks")
-        .then((res) => res.json())
-        .then((data) => setTasks(data))
-        .catch((err) => console.error("Error fetching tasks:", err));
+    const [task, setTask] = useState('')
+    const [description, setDescription] = useState('')
+    const [Tasks, setTasks] = useState([])
+
+
+    useEffect(() => {
+      const storedTasks = localStorage.getItem("tasks")
+      if(storedTasks){
+        setTasks(JSON.parse(storedTasks))
+      }
+    
+     
+    }, []);
+
+
+    useEffect(()=>{
+
+        localStorage.setItem('tasks', JSON.stringify(Tasks))
+
+    }, [Tasks])
+
+
+    const addTask = (e)=>{
+        e.preventDefault()
+        if(!task.trim() || !description.trim() )return
+        const newTask = 
+        {id : Date.now(),
+            text : task,
+            description : description,
+            completed : false
+         }
+
+         setTasks([...Tasks, newTask])
+         setTask("")
+         setDescription('')
     }
-  }, []);
 
-  // Update localStorage whenever tasks change
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+   const ToggleTask = (id)=>{
+    const toggledTask = Tasks.map((t)=>
+    t.id===id ? {...t, completed : !t.completed} : t)
+    setTasks(toggledTask)
+    const updatedTasks = toggledTask.find((t)=> t.id ==id)
+    console.log('toggle task triggered')
+   }
 
-  // Add a new task
-  const addTask = async (e) => {
-    e.preventDefault();
-    if (!task.trim()) return;
-    const newTask = { id: Date.now(), text: task, completed: false };
+const DeleteTask = (id)=>{
+    const updatedTasks = Tasks.filter((t)=> t.id !== id )
+    setTasks(updatedTasks)
+}
 
-    // Update state
-    setTasks([...tasks, newTask]);
-    setTask("");
 
-    // Optionally, send the new task to the API
-    try {
-      await fetch("/api/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTask),
-      });
-    } catch (err) {
-      console.error("Error adding task:", err);
-    }
-  };
 
-  // Delete a task by id
-  const deleteTask = async (id) => {
-    const updatedTasks = tasks.filter((t) => t.id !== id);
-    setTasks(updatedTasks);
+    
 
-    // Optionally, notify the API
-    try {
-      await fetch(`/api/tasks?id=${id}`, { method: "DELETE" });
-    } catch (err) {
-      console.error("Error deleting task:", err);
-    }
-  };
+    return(
+        <div className="mx-auto max-w-2xl  rounded-2xl shadow-2xl bg-gray-900 p-4">
+            <h1 className="font-bold text-4xl text-center">Todo List</h1>
 
-  // Toggle the completed status of a task
-  const toggleTask = async (id) => {
-    const updatedTasks = tasks.map((t) =>
-      t.id === id ? { ...t, completed: !t.completed } : t
-    );
-    setTasks(updatedTasks);
+            <form 
+            onSubmit={addTask}
 
-    // Optionally, notify the API of the update
-    const toggledTask = updatedTasks.find((t) => t.id === id);
-    try {
-      await fetch("/api/tasks", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toggledTask),
-      });
-    } catch (err) {
-      console.error("Error toggling task:", err);
-    }
-  };
-
-  return (
-    <div style={{ padding: "2rem" }}>
-      <h1>To-Do List</h1>
-      <form onSubmit={addTask}>
-        <input
-          type="text"
-          placeholder="Add new task"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          style={{ marginRight: "0.5rem" }}
-        />
-        <button type="submit">Add Task</button>
-      </form>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {tasks.map((t) => (
-          <li key={t.id} style={{ marginTop: "1rem" }}>
-            <span
-              onClick={() => toggleTask(t.id)}
-              style={{
-                textDecoration: t.completed ? "line-through" : "none",
-                cursor: "pointer",
-                marginRight: "1rem",
-              }}
+            
             >
-              {t.text}
-            </span>
-            <button onClick={() => deleteTask(t.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+                <div className="p-2 border rounded-2xl flex " >
+                    <input type="text"
+                     className=" bg-gray-600 rounded-xl focus:outline-0 mr-2 px-3 focus:ring-amber-400" placeholder="ToDo title" 
+                     value={task}
+                     onChange={(e)=>setTask (e.target.value)}/>
+                    
+                    <input type="text"
+                     className=" bg-gray-600 rounded-xl focus:outline-0 px-3" placeholder="Add description" 
+                     value={description}
+                     onChange={(e)=>setDescription (e.target.value)}/>
+                     
+                    <button className="border rounded px-2 py-1 ml-auto bg-amber-600"
+                    type="submit">
+                        Add todo</button>
+                </div>
+            </form>
+
+            <ul>
+                {Tasks.map((t)=>(
+                    <li
+                    className= {`flex overflow-hidden relative  p-2 border rounded-xl  mt-2 ${t.completed ? "h-14  items-center" : ''}`}
+                    key={t.id}
+                    >
+                     <div className={`  flex flex-col w-[80%] transition duration-300 break-all text-ellipsis ${t.completed ? '-translate-x-full' : ''}`}>
+                       <span className={`font-bold text-sky-400 ${t.completed ? 'text-red-500' : ''}`}> {t.completed ? ``  : t.text } </span> 
+                    <span className={`${t.completed ? 'line-through' : ''}`}>{t.description}</span>
+                    </div>
+                    <div className={`absolute transition duration-500 text-green-500 font-bold text-xl  ${t.completed ? '' : '-translate-y-9 '}`}>Task Completed</div>
+                    <div className="flex gap-2">
+
+                    <button
+                    onClick={()=>DeleteTask(t.id)} className="border h-9 my-auto rounded px-2 py-1 ml-auto bg-red-600">
+                        Delete
+                        </button>
+
+                        <button className="border h-9 my-auto  rounded px-2 py-1 ml-auto bg-sky-500"
+                        onClick={()=>ToggleTask(t.id)}>{t.completed ? "Incomplete" : "Completed"}</button>
+                        </div>
+                     </li>
+                    
+                ))}
+            </ul>
+        </div>
+    )
 }
